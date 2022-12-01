@@ -1,6 +1,7 @@
 """ File for adding new cohorts from Understanding Society data to the population"""
 
 import pandas as pd
+import logging
 from minos.modules.base_module import Base
 
 # suppressing a warning that isn't a problem
@@ -234,6 +235,9 @@ class Replenishment(Base):
             # Create simulants and add them to the population data frame.
             # The method used can be changed in setup via builder.population.initializes_simulants.
             self.simulant_creater(cohort_size, population_configuration=new_cohort_config)
+
+            # logging
+            logging.info(f"Total new 16 year olds added to the model: {cohort_size}")
 
 
     def age_simulants(self, event):
