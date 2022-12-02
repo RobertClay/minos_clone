@@ -37,9 +37,9 @@ class hhIncomeIntervention():
                 E.g. rate tables.
         """
         # nothing done here yet. transition models specified by year later.
-        print("print sys argv")
-        print(sys.argv)
-        print(config.keys())
+        #print("print sys argv")
+        #print(sys.argv)
+        #print(config.keys())
         uplift = [0, 1000, 10000]  # uplift amount
         percentage_uplift = [10, 25, 75]  # uplift proportion.
         run_id = np.arange(1, 50 + 1, 1)  # 50 repeats for each combination of the above parameters
@@ -51,8 +51,8 @@ class hhIncomeIntervention():
             # If no task id specified (you should) choose the first task as a test.
             run_id = 1
         parameters = parameter_lists[run_id]
-        config.update({'experiment_parameters': parameters}, source=str(Path(__file__).resolve()))
-        config.update({'experiment_parameters_names': ['uplift', 'prop', 'id']}, source=str(Path(__file__).resolve()))
+        config.update({'intervention_parameters': parameters}, source=str(Path(__file__).resolve()))
+        config.update({'intervention_parameters_names': ['uplift', 'prop', 'id']}, source=str(Path(__file__).resolve()))
 
         self.uplift = parameters[0]
         self.prop = parameters[1]
@@ -162,8 +162,8 @@ class hhIncomeChildUplift():
             run_id = 0
         # specify parameters unique to this experiment. used to produce save directories later.
         parameters = [run_id]  # just the run_id is unique for £20 uplifts no change in amount/percentage of pop.
-        config.update({'experiment_parameters': parameters}, source=str(Path(__file__).resolve()))
-        config.update({'experiment_parameters_names': ['id']}, source=str(Path(__file__).resolve()))
+        config.update({'intervention_parameters': parameters}, source=str(Path(__file__).resolve()))
+        config.update({'intervention_parameters_names': ['id']}, source=str(Path(__file__).resolve()))
 
         return simulation
 
