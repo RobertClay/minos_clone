@@ -79,6 +79,10 @@ def RunPipeline(config, run_output_dir, intervention=None):
         components.append(Education())
 
     # Interventions (if necessary)
+    #TODO: include some error handling for choosing interventions
+    # Can do this using assertions
+    # i.e. try { AssertThat(intervention is in list(<int1>, <int2>) ...
+    # or even cleverer if we can get the repr()'s from the intervention classes to automate this step
     if intervention:
         if intervention == 'hhIncomeIntervention':
             components.append(hhIncomeIntervention())
