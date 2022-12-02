@@ -401,10 +401,12 @@ class livingWageIntervention(Base):
         # TODO some kind of heterogeneity for people in the same household..? general inclusion of household composition.
         self.population_view.update(pop[['hh_income', 'income_boosted', 'boost_amount']])
 
-        logging.info(f"\tNumber of people uplifted: {len(who_uplifted_London) + len(who_uplifted_notLondon)}")
-        logging.info(f"...which is {((len(who_uplifted_London) + len(who_uplifted_notLondon)) / len(pop)) * 100}% of the total population.")
-        logging.info(f"\t\tLondon: {len(who_uplifted_London)}")
-        logging.info(f"\t\tNot London: {len(who_uplifted_notLondon)}")
+        logging.info(f"\tNumber of people uplifted: {sum(who_uplifted_London) + sum(who_uplifted_notLondon)}")
+        logging.info(f"\t...which is {((sum(who_uplifted_London) + sum(who_uplifted_notLondon)) / len(pop)) * 100}% of the total population.")
+        logging.info(f"\t\tLondon n: {sum(who_uplifted_London)}")
+        logging.info(f"\t\tLondon %: {(sum(who_uplifted_London) / len(pop[pop['region'] == 'London'])) * 100}")
+        logging.info(f"\t\tNot London n: {sum(who_uplifted_notLondon)}")
+        logging.info(f"\t\tNot London %: {(sum(who_uplifted_notLondon) / len(pop[pop['region'] != 'London'])) * 100}")
         logging.info(f"\tMean weekly boost amount: {pop['boost_amount'][pop['income_boosted'] == True].mean()}")
         logging.info(f"\t\tLondon: {pop[who_uplifted_London]['boost_amount'].mean()}")
         logging.info(f"\t\tNot London: {pop[who_uplifted_notLondon]['boost_amount'].mean()}")
@@ -484,5 +486,5 @@ class energyDownlift(Base):
         # TODO assumes constant fuel expenditure beyond negative hh income. need some kind of energy module to adjust behaviour..
         self.population_view.update(pop[['hh_income', 'income_boosted', 'boost_amount']])
 
-        logging.info(f"\tNumber of people downlifted: {len(pop['income_boosted'])}")
+        logging.info(f"\tNumber of people downlifted: {sum(pop['income_boosted'])}")
         logging.info(f"\tMean boost amount: {pop['boost_amount'].mean()}")
