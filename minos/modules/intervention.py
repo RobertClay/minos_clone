@@ -117,8 +117,8 @@ class hhIncomeIntervention():
         # TODO some kind of heterogeneity for people in the same household..? general inclusion of houshold compositon.
         self.population_view.update(pop[['hh_income', 'income_boosted', 'boost_amount']])
 
-        logging.info(f"\tNumber of people uplifted: {len(who_uplifted)}")
-        logging.info(f"...which is {(len(who_uplifted) / len(pop)) * 100}% of the total population.")
+        logging.info(f"\tNumber of people uplifted: {sum(who_uplifted)}")
+        logging.info(f"...which is {(sum(who_uplifted) / len(pop)) * 100}% of the total population.")
         logging.info(f"\tMean boost amount: {pop['boost_amount'].mean()}")
 
 
@@ -224,9 +224,9 @@ class hhIncomeChildUplift():
         # TODO some kind of heterogeneity for people in the same household..? general inclusion of houshold compositon.
         self.population_view.update(pop[['hh_income', 'income_boosted', 'boost_amount']])
 
-        logging.info(f"\tNumber of people uplifted: {len(pop['income_boosted'])}")
-        logging.info(f"...which is {(len(who_uplifted) / len(pop)) * 100}% of the total population.")
-        logging.info(f"\tMean boost amount: {pop['boost_amount'].mean()}")
+        logging.info(f"\tNumber of people uplifted: {sum(pop['income_boosted'])}")
+        logging.info(f"...which is {(sum(pop['income_boosted']) / len(pop)) * 100}% of the total population.")
+        logging.info(f"\tMean boost amount: {pop['boost_amount'][pop['income_boosted']].mean()}")
 
 
 ########################################################################################################################
@@ -303,9 +303,9 @@ class hhIncomePovertyLineChildUplift(Base):
         # TODO some kind of heterogeneity for people in the same household..? general inclusion of houshold compositon.
         self.population_view.update(pop[['hh_income', 'income_boosted', 'boost_amount']])
 
-        logging.info(f"\tNumber of people uplifted: {len(who_uplifted)}")
-        logging.info(f"...which is {(len(who_uplifted) / len(pop)) * 100}% of the total population.")
-        logging.info(f"\tMean boost amount: {pop['boost_amount'].mean()}")
+        logging.info(f"\tNumber of people uplifted: {sum(who_uplifted)}")
+        logging.info(f"...which is {(sum(who_uplifted) / len(pop)) * 100}% of the total population.")
+        logging.info(f"\tMean boost amount: {pop['boost_amount'][who_uplifted].mean()}")
 
 
 class livingWageIntervention(Base):
@@ -487,4 +487,4 @@ class energyDownlift(Base):
         self.population_view.update(pop[['hh_income', 'income_boosted', 'boost_amount']])
 
         logging.info(f"\tNumber of people downlifted: {sum(pop['income_boosted'])}")
-        logging.info(f"\tMean boost amount: {pop['boost_amount'].mean()}")
+        logging.info(f"\tMean boost amount: {pop['boost_amount'][pop['income_boosted']].mean()}")
