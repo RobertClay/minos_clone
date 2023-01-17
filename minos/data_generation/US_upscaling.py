@@ -1,7 +1,8 @@
 """File for scaling up Understanding Society population. For now just merge with chris' spatial data."""
 
+import pandas as pd
 import US_utils
-def spatial_pidp_upscale(data)
+def spatial_pidp_upscale(data):
     """Simply merge on chris' data to produce a full scale individually representative pop"""
     #TODO there is a household level representative pop available.
     spatial_data = pd.read_csv("persistent_data/ADULT_population_GB_2018.csv")
