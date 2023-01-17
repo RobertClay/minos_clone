@@ -21,10 +21,10 @@ def main():
     # get files
     # subset by X.
     # save files.
-    file_names = ["data/final_US/2018_US_cohort.csv"]
-    data = US_utils.load_multiple_data(file_names)[0]
+    file_names = ["data/final_US/2019_US_cohort.csv"]
+    data = US_utils.load_multiple_data(file_names)
     data = get_scottish(data)
-    US_utils.save_multiple_files(data, [2018], "scotland_US", "")
+    US_utils.save_multiple_files(data, [2019], "data/scotland_US/", "")
 
 if __name__ == '__main__':
     main()
