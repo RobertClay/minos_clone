@@ -13,7 +13,7 @@ import pandas as pd
 import numpy as np
 
 
-def load_transitions(component, path = 'data/transitions/'):
+def load_transitions(component, path='data/transitions/'):
     """
     This function will load transition models that have been generated in R and saved as .rds files.
     
@@ -199,5 +199,5 @@ def predict_next_timestep_zip(model, current, dependent):
     # if they drink assign them their predicted value from count.
     # otherwise assign 0 (no spending).
     preds = (np.random.uniform(size=zeros.shape) >= zeros) * counts
-    # round up to the nearest integer and times by 50 to get actual expenditure back.
-    return preds
+
+    return np.ceil(preds)

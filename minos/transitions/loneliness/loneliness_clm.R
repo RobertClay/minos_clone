@@ -77,8 +77,9 @@ main <- function(years){
                             relevel(factor(job_sec), ref = '3') + 
                             scale(hh_income) + 
                             relevel(factor(hh_comp), ref = '3') + 
-                            relevel(factor(marital_status), ref = 'Partnered'), 
-                            data = data, link='logit')
+                            relevel(factor(marital_status), ref = 'Partnered'),
+                            data = data, 
+                            link='logit')
     
     print(summary(loneliness.clm))
     prs<- 1 - logLik(loneliness.clm)/logLik(clm(factor(loneliness_next) ~ 1, data=data))

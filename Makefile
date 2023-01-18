@@ -185,7 +185,7 @@ beefy_intervention_livingWage: setup
 beefy_intervention_energyDownLift: setup
 	bash scripts/slurm_submit.sh -c config/default.yaml -o 'default_config' -i 'energyDownlift'
 
-beefy_all: beefy_baseline beefy_intervention_hhIncomeChildUplift beefy_interven$
+beefy_all: beefy_baseline beefy_intervention_hhIncomeChildUplift beefy_intervention_PovertyLineChildUplift beefy_intervention_livingWage beefy_intervention_energyDownLift
 
 #####################################
 ### SETUP
@@ -271,7 +271,7 @@ transitions: $(TRANSITION_DATA)/alcohol/zip/alcohol_zip_2018_2019.rds $(TRANSITI
 transitions: $(TRANSITION_DATA)/loneliness/clm/loneliness_clm_2018_2019.rds
 
 new_transitions: | $(TRANSITION_DATA)
-new_transitions: $(TRANSITION_SOURCE)/model_definitions_NEW.txt final_data $(TRANSITION_DATA)/hh_income/ols/hh_income_2018_2019.rds
+new_transitions: $(TRANSITION_SOURCE)/model_definitions.txt final_data $(TRANSITION_DATA)/hh_income/ols/hh_income_2018_2019.rds
 #new_transitions: $(TRANSITION_DATA)/loneliness/clm/loneliness_2018_2019.rds
 
 $(TRANSITION_DATA)/hh_income/ols/hh_income_2018_2019.rds: $(FINALDATA)/2019_US_cohort.csv $(TRANSITION_SOURCE)/estimate_transitions.R
@@ -404,7 +404,7 @@ SPATIAL_DIRECTORY2 = output/$(INTERVENTION2)# second geojson for comparison in a
 AGG_METHOD = nanmean# what method to aggregate with.
 AGG_VARIABLE = SF_12# what variable to aggregate.
 AGG_YEAR = 2025# what year to map in data.
-AGG_LOCATION = glasgow # or manchester/scotland/sheffield
+AGG_LOCATION = scotland # or manchester/scotland/sheffield
 SAVE_FILE1 = $(SPATIAL_DIRECTORY1)/$(AGG_METHOD)_$(AGG_VARIABLE)_$(AGG_YEAR).geojson # data source from aggregation. Need to automate these file paths somehow.
 SAVE_PLOT1 = $(SPATIAL_DIRECTORY1)/$(AGG_METHOD)_$(AGG_VARIABLE)_$(AGG_YEAR) # where to save plot for aggregate_lsoas_and_map
 SAVE_FILE2 = $(SPATIAL_DIRECTORY2)/$(AGG_METHOD)_$(AGG_VARIABLE)_$(AGG_YEAR).geojson # data source for aggregation of second minos run. Used when comparing two interventions in aggreate_two_and_map_diff

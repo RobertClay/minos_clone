@@ -65,7 +65,8 @@ clm.neighbourhood.main <- function(years){
                                             factor(sex) + 
                                             factor(job_sec) + 
                                             relevel(factor(ethnicity), ref = 'WBI') + 
-                                            scale(hh_income) + factor(housing_quality) + 
+                                            scale(hh_income) + 
+                                            factor(housing_quality) + 
                                             relevel(factor(region), ref = 'South East')"
     neighbourhood.clm <- clm(formula,
                             data = data,

@@ -42,7 +42,7 @@ labour.nnet.main <- function(years){
 
     if(year == 2009) {
         # no weight data in 2009
-        labour.nnet <- multinom(factor(y) ~
+        labour.nnet <- multinom(factor(labour_state_next) ~
                  (factor(sex) +
                   relevel(factor(ethnicity), ref = "WBI") +
                   age +
@@ -56,7 +56,7 @@ labour.nnet.main <- function(years){
                ,data = data, MaxNWts = 10000, maxit=10000)
     } else {
         # weight data available 2010 onwards
-        m1 <- multinom(factor(y) ~
+        labour.nnet <- multinom(factor(labour_state_next) ~
                  (factor(sex) +
                   relevel(factor(ethnicity), ref = "WBI") +
                   age +
@@ -69,7 +69,6 @@ labour.nnet.main <- function(years){
                   scale(alcohol_spending))#**2 # higher order terms. better accuracy but takes 20x as long to calibrate.
                ,data = data, MaxNWts = 10000, maxit=10000, weights = weight)
     }
-    labour.nnet
 
     out.path <- "data/transitions/labour/nnet/"
     create.if.not.exists("data/transitions/labour/")
