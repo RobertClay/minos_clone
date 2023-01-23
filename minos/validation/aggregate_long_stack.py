@@ -6,7 +6,7 @@ import numpy as np
 def get_file_names(source_directories, v, method):
     file_names = []
     for source in source_directories:
-        file_name = os.path.join("output", source, f"aggregated_{v}_by_{method}.csv")
+        file_name = os.path.join("output/default_config", source, f"aggregated_{v}_by_{method}.csv")
         file_names.append(file_name)
     return file_names
 
@@ -89,7 +89,7 @@ def main(source_directories, v="SF_12", method="nanmean", destination = None, re
     # join directories together to make name. put it in the first specified source directory.
     if not destination:
         print(f"No destination for output file defined. Storing in first specified source directory {source_directories[0]}.")
-        destination = os.path.join("output", source_directories[0])
+        destination = os.path.join("output/default_config", source_directories[0])
     out_file = os.path.join(destination, "aggregated_" + "_".join(source_directories) + ".csv")
     df.to_csv(out_file, index=False)
 

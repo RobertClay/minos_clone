@@ -123,7 +123,7 @@ if __name__ == '__main__':
 
     for directory, tag, subset_function_string in zip(directories, tags, subset_functions):
         subset_function = find_subset_function(subset_function_string)
-        batch_source = os.path.join(source, directory)
+        batch_source = os.path.join(source, 'default_config', directory)
         # get years from MINOS batch run config yaml.
         with open(f"{batch_source}/config_file.yml", "r") as stream:
             config = yaml.safe_load(stream)

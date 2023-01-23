@@ -71,5 +71,5 @@ if __name__ == '__main__':
     prefix = args['prefix']
 
     sources = sources.split(",")
-    source = os.path.join('output', sources[0], "aggregated_" + "_".join(sources) + ".csv")
+    source = os.path.join('output/default_config', sources[0], "aggregated_" + "_".join(sources) + ".csv")
     main(source, destination, v, method, prefix)
