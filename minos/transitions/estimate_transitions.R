@@ -256,10 +256,10 @@ run_yearly_models <- function(transitionDir_path, transitionSourceDir_path, mod_
       # as neighbourhood_safety, loneliness, and ncigs are not present every year
       if(dependent == 'SF_12') {
         if(!year %in% c(2011, 2014, 2017)) {
-          formula.string <- str_remove(formula.string, " \\+ factor\\(neighbourhood_safety\\)")
+          formula.string <- str_remove(formula.string, " \\+ relevel\\(factor\\(neighbourhood_safety\\), ref = '1'\\)")
         }
         if(!year > 2016) {
-          formula.string <- str_remove(formula.string, " \\+ factor\\(loneliness\\)")
+          formula.string <- str_remove(formula.string, " \\+ relevel\\(factor\\(loneliness\\), ref = '1'\\)")
         }
         if(year != 2018) {
           formula.string <- str_remove(formula.string, " \\+ scale\\(nutrition_quality\\)")
@@ -350,7 +350,7 @@ run_yearly_models <- function(transitionDir_path, transitionSourceDir_path, mod_
 dataDir <- 'data/final_US/'
 transitionDir <- 'data/transitions/'
 transSourceDir <- 'minos/transitions/'
-modDefFilename <- 'model_definitions_NEW.txt'
+modDefFilename <- 'model_definitions.txt'
 
 # Load input data (final_US/)
 filelist <- list.files(dataDir)
