@@ -69,6 +69,9 @@ help: ### Show this help
 # conda install -c conda-forge r-tidyverse
 
 
+# TEMPORARY TEST RUN
+tmp_test: new_setup baseline intervention_energyDownLift aggregate_minos_output_energy
+
 ## Install
 ###
 
@@ -128,7 +131,7 @@ intervention_PovertyLineChildUplift: setup
 intervention_livingWage: setup
 	$(PYTHON) scripts/run.py -c $(CONFIG)/default.yaml -o 'default_config' -i 'livingWageIntervention'
 
-intervention_energyDownLift: setup
+intervention_energyDownLift: new_setup
 	$(PYTHON) scripts/run.py -c $(CONFIG)/default.yaml -o 'default_config' -i 'energyDownlift'
 
 
@@ -246,7 +249,7 @@ transitions: $(TRANSITION_DATA)/loneliness/clm/loneliness_clm_2018_2019.rds
 
 new_transitions: | $(TRANSITION_DATA)
 new_transitions: $(TRANSITION_SOURCE)/model_definitions_NEW.txt final_data $(TRANSITION_DATA)/hh_income/ols/hh_income_2018_2019.rds
-new_transitions: $(TRANSITION_DATA)/loneliness/clm/loneliness_2018_2019.rds $(TRANSITION_DATA)/neighbourhood_safety/clm/neighbourhood_safety_2014_2017.rds
+#new_transitions: $(TRANSITION_DATA)/loneliness/clm/loneliness_2018_2019.rds $(TRANSITION_DATA)/neighbourhood_safety/clm/neighbourhood_safety_2014_2017.rds
 
 $(TRANSITION_DATA)/hh_income/ols/hh_income_2018_2019.rds: $(FINALDATA)/2019_US_cohort.csv $(TRANSITION_SOURCE)/estimate_transitions.R
 	$(RSCRIPT) $(SOURCEDIR)/transitions/estimate_transitions.R
@@ -351,11 +354,11 @@ aggregate_minos_output_all_child_uplift:
 
 aggregate_minos_output_energy:
 	# custom baseline for living wage only.
-	$(PYTHON) minos/validation/aggregate_minos_output.py -s $(DATAOUT) -d baseline,energyDownlift -t "Baseline,Energy Downlift" -m $(AGGREGATE_METHOD) -v $(AGGREGATE_VARIABLE) -f who_bottom_income_quintile,who_boosted
+	$(PYTHON) minos/validation/aggregate_minos_output.py -s $(DATAOUT) -d baseline,energyDownlift -t "Baseline,Energy Downlift" -m $(AGGREGATE_METHOD) -v $(AGGREGATE_VARIABLE) -f who_alive,who_boosted
 	# stack aggregated files into one long array.
 	$(PYTHON) minos/validation/aggregate_long_stack.py -s baseline,energyDownlift -r $(REF_LEVEL) -v $(AGGREGATE_VARIABLE) -m $(AGGREGATE_METHOD)
 	# make line plot.
-	$(PYTHON) minos/validation/aggregate_lineplot.py -s baseline,energyDownlift -v $(AGGREGATE_VARIABLE) -d $(PLOTDIR) -m $(AGGREGATE_METHOD) -p "living_wage_treated"
+	$(PYTHON) minos/validation/aggregate_lineplot.py -s baseline,energyDownlift -v $(AGGREGATE_VARIABLE) -d $(PLOTDIR) -m $(AGGREGATE_METHOD) -p "energy_downlift"
 
 all_lineplots: aggregate_minos_output aggregate_minos_output_treated aggregate_minos_output_living_wage aggregate_minos_output_poverty_child_uplift aggregate_minos_output_all_child_uplift
 all_treated_lineplots: aggregate_minos_output_living_wage aggregate_minos_output_poverty_child_uplift aggregate_minos_output_all_child_uplift
