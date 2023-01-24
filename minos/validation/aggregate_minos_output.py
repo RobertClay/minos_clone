@@ -48,7 +48,6 @@ def aggregate_variables_by_year(source, years, tag, v, method, subset_func):
 
     df = pd.DataFrame()
     for year in years:
-        print(f'Aggregating for year {year}...')
         files = glob.glob(os.path.join(source, f"*{year}.csv"))  # grab all files at source with suffix year.csv.
 
         # 2018 is special case - not simulated yet and therefore doesn't have any of the tags for subset functions
@@ -64,8 +63,6 @@ def aggregate_variables_by_year(source, years, tag, v, method, subset_func):
                                                 zip(files, repeat(v), repeat(method), repeat(subset_func)))
 
         new_df = pd.DataFrame(aggregated_means)
-        print(f"Length of df: {len(new_df)}")
-        print(new_df.columns)
         new_df.columns = [v]
         new_df['year'] = year
         new_df['tag'] = tag
