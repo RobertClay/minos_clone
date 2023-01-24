@@ -49,8 +49,8 @@ class hhIncomeIntervention():
             # If no task id specified (you should) choose the first task as a test.
             run_id = 1
         parameters = parameter_lists[run_id]
-        config.update({'experiment_parameters': parameters}, source=str(Path(__file__).resolve()))
-        config.update({'experiment_parameters_names': ['uplift', 'prop', 'id']}, source=str(Path(__file__).resolve()))
+        config.update({'intervention_parameters': parameters}, source=str(Path(__file__).resolve()))
+        config.update({'intervention_parameters_names': ['uplift', 'prop', 'id']}, source=str(Path(__file__).resolve()))
 
         self.uplift = parameters[0]
         self.prop = parameters[1]
