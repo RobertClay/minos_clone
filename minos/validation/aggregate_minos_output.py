@@ -145,7 +145,7 @@ if __name__ == '__main__':
     for directory, tag, subset_function_string in zip(directories, tags, subset_functions):
 
         # Handle the datetime folder inside the output. Select most recent run
-        runtime = os.listdir(os.path.abspath(os.path.join(source, 'default_config', directory)))
+        runtime = os.listdir(os.path.abspath(os.path.join(source, directory)))
         #TODO: Replace this block (or encapsulate) in a try except block for proper error handling
         if len(runtime) > 1:
             # if more than 1, select most recent datetime
@@ -157,7 +157,7 @@ if __name__ == '__main__':
                                "aggregate. Please check the output directory.")
 
         subset_function = find_subset_function(subset_function_string)
-        batch_source = os.path.join(source, 'default_config', directory, runtime)
+        batch_source = os.path.join(source, directory, runtime)
         # get years from MINOS batch run config yaml.
         with open(f"{batch_source}/config_file.yml", "r") as stream:
             config = yaml.safe_load(stream)

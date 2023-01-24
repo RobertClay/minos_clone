@@ -9,6 +9,7 @@ COMPOSITEDATA = $(DATADIR)/composite_US
 COMPLETEDATA = $(DATADIR)/complete_US
 FINALDATA = $(DATADIR)/final_US
 SPATIALDATA = $(DATADIR)/spatial_US
+SCOTDATA = $(DATADIR)/scotland_US
 PERSISTDATA = $(CURDIR)/persistent_data
 PERSISTJSON = $(PERSISTDATA)/JSON
 SOURCEDIR = $(CURDIR)/minos
@@ -68,9 +69,9 @@ help: ### Show this help
 # conda install -c conda-forge r-dplyr
 # conda install -c conda-forge r-tidyverse
 
-
 # TEMPORARY TEST RUN
 tmp_test: new_setup baseline intervention_energyDownLift aggregate_minos_output_energy
+
 
 ## Install
 ###
@@ -80,12 +81,14 @@ install: ### Install all Minos requirements via pip
 install: $(SITEPACKAGES)/vivarium/__init__.py
 
 $(SITEPACKAGES)/vivarium/__init__.py:
-	@echo "Installing requirements via pip"
+	@echo "Installing requirements via pip..."
 	pip install -v -e .
 	@echo "Replacing a line in vivarium.framework.randomness.py because it's broken."
 	# New pandas version no longer needs to raise a key error.
 	@sed -i 's/except (IndexError, TypeError)/except (IndexError, TypeError, KeyError)/' $(SITEPACKAGES)/vivarium/framework/randomness.py
-	@echo "python install complete."
+	@echo "Python install complete."
+	@echo "Installing R..."
+	conda install -c conda-forge r-base=4.1.2
 	@echo "installing R requirements"
 	Rscript install.R # install any R packages. Annoying to do in conda.
 	@echo "\nInstall complete!\n"
@@ -136,6 +139,13 @@ intervention_energyDownLift: new_setup
 
 
 #####################################
+## Scotland Local runs of MINOS interventions.
+#####################################
+
+scot_baseline: scot_setup
+	$(PYTHON) scripts/run.py -c $(CONFIG)/scot_default.yaml -o 'scot_config'
+
+#####################################
 ## Running MINOS scenarios on Arc4
 #####################################
 
@@ -160,6 +170,7 @@ arc4_intervention_livingWage: new_setup
 arc4_intervention_energyDownLift: new_setup
 	bash scripts/arc_submit.sh -c config/default.yaml -o 'default_config' -i 'energyDownlift'
 
+arc4_allscenarios: arc4_baseline arc4_intervention_hhIncome arc4_intervention_hhIncomeChildUplift arc4_intervention_PovertyLineChildUplift arc4_intervention_livingWage arc4_intervention_energyDownLift
 
 #####################################
 # Running scenarios on beefy HPC in LIDA.
@@ -167,8 +178,25 @@ arc4_intervention_energyDownLift: new_setup
 
 # Needs doing when we can access the machine again..
 beefy_baseline: ### Baseline run of MINOS on beefy. Runs 100 iterations with no interventions at all. Just status quo.
-beefy_baseline: install data transitions
-	$(PYTHON) # fill in when have access to beefy again..
+beefy_baseline: setup
+	bash scripts/slurm_submit.sh -c config/default.yaml -o 'default_config'
+
+beefy_intervention_hhIncome: setup
+	bash scripts/slurm_submit.sh -c config/default.yaml -o 'default_config' -i 'hhIncomeIntervention'
+
+beefy_intervention_hhIncomeChildUplift: setup
+	bash scripts/slurm_submit.sh -c config/default.yaml -o 'default_config' -i 'hhIncomeChildUplift'
+
+beefy_intervention_PovertyLineChildUplift: setup
+	bash scripts/slurm_submit.sh -c config/default.yaml -o 'default_config' -i 'hhIncomePovertyLineChildUplift'
+
+beefy_intervention_livingWage: setup
+	bash scripts/slurm_submit.sh -c config/default.yaml -o 'default_config' -i 'livingWageIntervention'
+
+beefy_intervention_energyDownLift: setup
+	bash scripts/slurm_submit.sh -c config/default.yaml -o 'default_config' -i 'energyDownlift'
+
+beefy_all: beefy_baseline beefy_intervention_hhIncomeChildUplift beefy_intervention_PovertyLineChildUplift beefy_intervention_livingWage beefy_intervention_energyDownLift
 
 #####################################
 ### SETUP
@@ -178,7 +206,9 @@ setup: ### Setup target to prepare everything required for simulation.
 ### Runs install, prepares input data, estimates transition models, and generates input populations
 setup: install data transitions replenishing_data
 
-new_setup: install data new_transitions replenishing_data
+new_setup: install data transitions replenishing_data
+
+scot_setup: install scot_data scot_transitions scot_replenishing
 
 #####################################
 ### Data Generation
@@ -204,11 +234,15 @@ final_data: ### Produce the final version of the data (including replenishing po
 final_data: $(FINALDATA)/2019_US_cohort.csv
 
 replenishing_data: ### Produce the replenishing population (MORE NEEDED HERE).
-replenishing_data: $(TRANSITION_DATA)/education_state/nnet/education_state_2018_2019.rds $(DATADIR)/replenishing/replenishing_pop_2019-2070.csv
+replenishing_data:  $(TRANSITION_DATA)/education_state/nnet/education_state_2018_2019.rds $(DATADIR)/replenishing/replenishing_pop_2019-2070.csv
+
+scot_replenishing: $(DATADIR)/replenishing/scotland_mode.txt $(SCOTDATA)/2019_US_cohort.csv $(TRANSITION_DATA)/education_state/nnet/education_state_2018_2019.rds
 
 spatial_data: ### Attach Chris' spatially disaggregated dataset and extract all records for Sheffield, to generate a
 ### version of the final data to be used in spatial analyses (of Sheffield only)
 spatial_data: $(SPATIALDATA)/2019_US_cohort.csv
+
+scot_data: $(SCOTDATA)/2019_US_cohort.csv
 
 #####################################
 # Input Populations
@@ -232,27 +266,38 @@ $(FINALDATA)/2019_US_cohort.csv: $(RAWDATA)/2019_US_cohort.csv $(CORRECTDATA)/20
 $(DATADIR)/replenishing/replenishing_pop_2019-2070.csv: $(RAWDATA)/2019_US_cohort.csv $(CORRECTDATA)/2019_US_cohort.csv $(COMPOSITEDATA)/2019_US_cohort.csv $(COMPLETEDATA)/2019_US_cohort.csv $(FINALDATA)/2019_US_cohort.csv $(TRANSITION_DATA)/education_state/nnet/education_state_2018_2019.rds $(DATAGEN)/US_utils.py $(DATAGEN)/generate_repl_pop.py $(PERSISTJSON)/*.json $(MODULES)/r_utils.py
 	$(PYTHON) $(DATAGEN)/generate_repl_pop.py
 
+$(DATADIR)/replenishing/scotland_mode.txt: $(SCOTDATA)/2019_US_cohort.csv $(TRANSITION_DATA)/education_state/nnet/education_state_2018_2019.rds $(DATAGEN)/US_utils.py $(DATAGEN)/generate_repl_pop.py $(PERSISTJSON)/*.json $(MODULES)/r_utils.py
+	$(PYTHON) $(DATAGEN)/generate_repl_pop.py --scotland
+
 $(SPATIALDATA)/2019_US_cohort.csv: $(RAWDATA)/2019_US_cohort.csv $(CORRECTDATA)/2019_US_cohort.csv $(COMPOSITEDATA)/2019_US_cohort.csv $(COMPLETEDATA)/2019_US_cohort.csv $(FINALDATA)/2019_US_cohort.csv $(DATAGEN)/US_utils.py $(PERSISTJSON)/*.json $(FINALDATA)/2019_US_cohort.csv) $(SPATIALSOURCEDIR)/ADULT_population_GB_2018.csv
 	$(PYTHON) $(DATAGEN)/US_generate_spatial_component.py --source_dir $(SPATIALSOURCEDIR)
+
+$(SCOTDATA)/2019_US_cohort.csv: $(FINALDATA)/2019_US_cohort.csv $(TRANSITION_SOURCE)/scotland_mode.txt
+	$(PYTHON) $(DATAGEN)/US_scotland_subsetting.py
 
 #####################################
 ### transitions
 #####################################
 
-transitions: ### Run R scripts to generate transition models for each module
+#transitions: ### Run R scripts to generate transition models for each module
+#transitions: | $(TRANSITION_DATA)
+#transitions: final_data $(TRANSITION_DATA)/hh_income/hh_income_2018_2019.rds $(TRANSITION_DATA)/housing/clm/housing_clm_2018_2019.rds
+#transitions: $(TRANSITION_DATA)/mwb/ols/sf12_ols_2018_2019.rds $(TRANSITION_DATA)/labour/nnet/labour_nnet_2018_2019.rds
+#transitions: $(TRANSITION_DATA)/neighbourhood/clm/neighbourhood_clm_2014_2017.rds $(TRANSITION_DATA)/tobacco/zip/tobacco_zip_2018_2019.rds
+#transitions: $(TRANSITION_DATA)/alcohol/zip/alcohol_zip_2018_2019.rds $(TRANSITION_DATA)/nutrition/ols/nutrition_ols_2018_2019.rds
+#transitions: $(TRANSITION_DATA)/loneliness/clm/loneliness_clm_2018_2019.rds
+
 transitions: | $(TRANSITION_DATA)
-transitions: final_data $(TRANSITION_DATA)/hh_income/hh_income_2018_2019.rds $(TRANSITION_DATA)/housing/clm/housing_clm_2018_2019.rds
-transitions: $(TRANSITION_DATA)/mwb/ols/sf12_ols_2018_2019.rds $(TRANSITION_DATA)/labour/nnet/labour_nnet_2018_2019.rds
-transitions: $(TRANSITION_DATA)/neighbourhood/clm/neighbourhood_clm_2014_2017.rds $(TRANSITION_DATA)/tobacco/zip/tobacco_zip_2018_2019.rds
-transitions: $(TRANSITION_DATA)/alcohol/zip/alcohol_zip_2018_2019.rds $(TRANSITION_DATA)/nutrition/ols/nutrition_ols_2018_2019.rds
-transitions: $(TRANSITION_DATA)/loneliness/clm/loneliness_clm_2018_2019.rds
+transitions: $(TRANSITION_SOURCE)/model_definitions.txt final_data $(TRANSITION_DATA)/hh_income/ols/hh_income_2018_2019.rds
+#new_transitions: $(TRANSITION_DATA)/loneliness/clm/loneliness_2018_2019.rds
 
-new_transitions: | $(TRANSITION_DATA)
-new_transitions: $(TRANSITION_SOURCE)/model_definitions_NEW.txt final_data $(TRANSITION_DATA)/hh_income/ols/hh_income_2018_2019.rds
-#new_transitions: $(TRANSITION_DATA)/loneliness/clm/loneliness_2018_2019.rds $(TRANSITION_DATA)/neighbourhood_safety/clm/neighbourhood_safety_2014_2017.rds
+scot_transitions: $(TRANSITION_SOURCE)/model_definitions_SCOTLAND.txt $(SCOTDATA)/2019_US_cohort.csv $(TRANSITION_SOURCE)/scotland_mode.txt
 
-$(TRANSITION_DATA)/hh_income/ols/hh_income_2018_2019.rds: $(FINALDATA)/2019_US_cohort.csv $(TRANSITION_SOURCE)/estimate_transitions.R
+$(TRANSITION_DATA)/hh_income/ols/hh_income_2018_2019.rds: $(FINALDATA)/2019_US_cohort.csv $(TRANSITION_SOURCE)/estimate_transitions.R $(TRANSITION_SOURCE)/model_definitions.txt
 	$(RSCRIPT) $(SOURCEDIR)/transitions/estimate_transitions.R
+
+$(TRANSITION_SOURCE)/scotland_mode.txt: $(SCOTDATA)/2019_US_cohort.csv $(TRANSITION_SOURCE)/estimate_transitions.R
+	$(RSCRIPT) $(SOURCEDIR)/transitions/estimate_transitions.R --scotland
 
 $(TRANSITION_DATA)/loneliness/clm/loneliness_2018_2019.rds: $(FINALDATA)/2019_US_cohort.csv $(SOURCEDIR)/transitions/loneliness/loneliness_clm.R
 	$(RSCRIPT) $(SOURCEDIR)/transitions/loneliness/loneliness_clm.R
@@ -280,7 +325,7 @@ $(TRANSITION_DATA)/mwb/ols/sf12_ols_2018_2019.rds: $(FINALDATA)/2019_US_cohort.c
 $(TRANSITION_DATA)/labour/nnet/labour_nnet_2018_2019.rds: $(FINALDATA)/2019_US_cohort.csv $(SOURCEDIR)/transitions/labour/labour_nnet.R
 	$(RSCRIPT) $(SOURCEDIR)/transitions/labour/labour_nnet.R
 
-$(TRANSITION_DATA)/education/nnet/educ_nnet_2018_2019.rds: $(FINALDATA)/2019_US_cohort.csv $(SOURCEDIR)/transitions/education/education_nnet.r
+$(TRANSITION_DATA)/education_state/nnet/education_state_2018_2019.rds: $(FINALDATA)/2019_US_cohort.csv $(SOURCEDIR)/transitions/education/education_nnet.r
 	$(RSCRIPT) $(SOURCEDIR)/transitions/education/education_nnet.r
 
 $(TRANSITION_DATA)/neighbourhood/clm/neighbourhood_clm_2014_2017.rds: $(FINALDATA)/2019_US_cohort.csv $(SOURCEDIR)/transitions/neighbourhood/neighbourhood_clm.R
@@ -308,12 +353,12 @@ AGGREGATE_VARIABLE = SF_12
 REF_LEVEL = Baseline
 DIRECTORIES = baseline,hhIncomeChildUplift,livingWageIntervention,energyDownlift
 DIRECTORY_TAGS = "Baseline,£25 All Child Uplift,Living Wage,Energy Downlift"
-SUBSET_FUNCTIONS = "who_alive,who_boosted,who_boosted,who_boosted"
+SUBSET_FUNCTIONS = "who_alive,who_alive,who_alive,who_alive"
 
 aggregate_minos_output:
 	# See file for tag meanings.
 	# aggregate files for baseline, all child uplift, and poverty line uplift.
-	$(PYTHON) minos/validation/aggregate_minos_output.py -s $(DATAOUT) -d $(DIRECTORIES) -t $(DIRECTORY_TAGS) -m $(AGGREGATE_METHOD) -v $(AGGREGATE_VARIABLE) -f $(SUBSET_FUNCTIONS)
+	$(PYTHON) minos/validation/aggregate_minos_output.py -s $(DATAOUT)/default_config -d $(DIRECTORIES) -t $(DIRECTORY_TAGS) -m $(AGGREGATE_METHOD) -v $(AGGREGATE_VARIABLE) -f $(SUBSET_FUNCTIONS)
 	# stack aggregated files into one long array.
 	$(PYTHON) minos/validation/aggregate_long_stack.py -s $(DIRECTORIES) -r $(REF_LEVEL) -v $(AGGREGATE_VARIABLE) -m $(AGGREGATE_METHOD)
 	# make line plot.
@@ -322,15 +367,15 @@ aggregate_minos_output:
 aggregate_minos_output_treated:
 	# See file for tag meanings.
 	# aggregate files for baseline, all child uplift, and poverty line uplift.
-	$(PYTHON) minos/validation/aggregate_minos_output.py -s $(DATAOUT) -d baseline,hhIncomePovertyLineChildUplift,hhIncomeChildUplift,livingWageIntervention -t "Baseline,£25 Poverty Line Intervention,£25 All Child Uplift,Living Wage" -m $(AGGREGATE_METHOD) -v $(AGGREGATE_VARIABLE) -f who_alive,who_boosted,who_boosted,who_boosted
+	$(PYTHON) minos/validation/aggregate_minos_output.py -s $(DATAOUT)/default_config -d $(DIRECTORIES) -t $(DIRECTORY_TAGS) -m $(AGGREGATE_METHOD) -v $(AGGREGATE_VARIABLE) -f who_alive,who_boosted,who_boosted,who_boosted
 	# stack aggregated files into one long array.
-	$(PYTHON) minos/validation/aggregate_long_stack.py -s baseline,hhIncomePovertyLineChildUplift,hhIncomeChildUplift,livingWageIntervention -r $(REF_LEVEL) -v $(AGGREGATE_VARIABLE) -m $(AGGREGATE_METHOD)
+	$(PYTHON) minos/validation/aggregate_long_stack.py -s $(DIRECTORIES) -r $(REF_LEVEL) -v $(AGGREGATE_VARIABLE) -m $(AGGREGATE_METHOD)
 	# make line plot.
-	$(PYTHON) minos/validation/aggregate_lineplot.py -s baseline,hhIncomePovertyLineChildUplift,hhIncomeChildUplift,livingWageIntervention -v $(AGGREGATE_VARIABLE) -d $(PLOTDIR) -m $(AGGREGATE_METHOD) -p "treated"
+	$(PYTHON) minos/validation/aggregate_lineplot.py -s $(DIRECTORIES) -v $(AGGREGATE_VARIABLE) -d $(PLOTDIR) -m $(AGGREGATE_METHOD) -p "treated"
 
 aggregate_minos_output_living_wage:
 	# custom baseline for living wage only.
-	$(PYTHON) minos/validation/aggregate_minos_output.py -s $(DATAOUT) -d baseline,livingWageIntervention -t "Baseline,Living Wage Intervention" -m $(AGGREGATE_METHOD) -v $(AGGREGATE_VARIABLE) -f who_below_living_wage,who_boosted
+	$(PYTHON) minos/validation/aggregate_minos_output.py -s $(DATAOUT)/default_config -d baseline,livingWageIntervention -t "Baseline,Living Wage Intervention" -m $(AGGREGATE_METHOD) -v $(AGGREGATE_VARIABLE) -f who_below_living_wage,who_boosted
 	# stack aggregated files into one long array.
 	$(PYTHON) minos/validation/aggregate_long_stack.py -s baseline,livingWageIntervention -r $(REF_LEVEL) -v $(AGGREGATE_VARIABLE) -m $(AGGREGATE_METHOD)
 	# make line plot.
@@ -338,7 +383,7 @@ aggregate_minos_output_living_wage:
 
 aggregate_minos_output_poverty_child_uplift:
 	# custom baseline for living wage only.
-	$(PYTHON) minos/validation/aggregate_minos_output.py -s $(DATAOUT) -d baseline,hhIncomePovertyLineChildUplift -t Baseline,Poverty_Line_Uplift -m $(AGGREGATE_METHOD) -v $(AGGREGATE_VARIABLE) -f who_below_poverty_line_and_kids,who_boosted
+	$(PYTHON) minos/validation/aggregate_minos_output.py -s $(DATAOUT)/default_config -d baseline,hhIncomePovertyLineChildUplift -t "Baseline,Poverty Line Uplift" -m $(AGGREGATE_METHOD) -v $(AGGREGATE_VARIABLE) -f who_below_poverty_line_and_kids,who_boosted
 	# stack aggregated files into one long array.
 	$(PYTHON) minos/validation/aggregate_long_stack.py -s baseline,hhIncomePovertyLineChildUplift -r $(REF_LEVEL) -v $(AGGREGATE_VARIABLE) -m $(AGGREGATE_METHOD)
 	# make line plot.
@@ -346,7 +391,7 @@ aggregate_minos_output_poverty_child_uplift:
 
 aggregate_minos_output_all_child_uplift:
 	# custom baseline for living wage only.
-	$(PYTHON) minos/validation/aggregate_minos_output.py -s $(DATAOUT) -d baseline,hhIncomeChildUplift -t "Baseline,All Children Uplift" -m $(AGGREGATE_METHOD) -v $(AGGREGATE_VARIABLE) -f who_kids,who_boosted
+	$(PYTHON) minos/validation/aggregate_minos_output.py -s $(DATAOUT)/default_config -d baseline,hhIncomeChildUplift -t "Baseline,All Children Uplift" -m $(AGGREGATE_METHOD) -v $(AGGREGATE_VARIABLE) -f who_kids,who_boosted
 	# stack aggregated files into one long array.
 	$(PYTHON) minos/validation/aggregate_long_stack.py -s baseline,hhIncomeChildUplift -r $(REF_LEVEL) -v $(AGGREGATE_VARIABLE) -m $(AGGREGATE_METHOD)
 	# make line plot.
@@ -354,21 +399,28 @@ aggregate_minos_output_all_child_uplift:
 
 aggregate_minos_output_energy:
 	# custom baseline for living wage only.
-	$(PYTHON) minos/validation/aggregate_minos_output.py -s $(DATAOUT) -d baseline,energyDownlift -t "Baseline,Energy Downlift" -m $(AGGREGATE_METHOD) -v $(AGGREGATE_VARIABLE) -f who_alive,who_boosted
+	$(PYTHON) minos/validation/aggregate_minos_output.py -s $(DATAOUT)/default_config -d baseline,energyDownlift -t "Baseline,Energy Downlift" -m $(AGGREGATE_METHOD) -v $(AGGREGATE_VARIABLE) -f who_alive,who_boosted
 	# stack aggregated files into one long array.
 	$(PYTHON) minos/validation/aggregate_long_stack.py -s baseline,energyDownlift -r $(REF_LEVEL) -v $(AGGREGATE_VARIABLE) -m $(AGGREGATE_METHOD)
 	# make line plot.
 	$(PYTHON) minos/validation/aggregate_lineplot.py -s baseline,energyDownlift -v $(AGGREGATE_VARIABLE) -d $(PLOTDIR) -m $(AGGREGATE_METHOD) -p "energy_downlift"
 
-all_lineplots: aggregate_minos_output aggregate_minos_output_treated aggregate_minos_output_living_wage aggregate_minos_output_poverty_child_uplift aggregate_minos_output_all_child_uplift
-all_treated_lineplots: aggregate_minos_output_living_wage aggregate_minos_output_poverty_child_uplift aggregate_minos_output_all_child_uplift
+all_lineplots: aggregate_minos_output aggregate_minos_output_treated aggregate_minos_output_living_wage aggregate_minos_output_all_child_uplift aggregate_minos_output_poverty_child_uplift aggregate_minos_output_energy
+all_treated_lineplots: aggregate_minos_output_living_wage aggregate_minos_output_poverty_child_uplift aggregate_minos_output_all_child_uplift aggregate_minos_output_energy
 
 #####################################
 # Mapping multiple MINOS outputs into super outputs (LSOA/data zones) over Glasgow, Sheffield, Manchester, and Scotland regions. 
 #####################################
 
+DEFAULT_OUTPUT_SUBDIRECTORY = default_config
+
 INTERVENTION1 = baseline
 INTERVENTION2 = povertyUplift
+OUT_BASELINE = output/$(DEFAULT_OUTPUT_SUBDIRECTORY)/baseline
+OUT_HHINCOMECHILDUP = output/$(DEFAULT_OUTPUT_SUBDIRECTORY)/hhIncomeChildUplift
+OUT_ENERGYDOWNLIFT = output/$(DEFAULT_OUTPUT_SUBDIRECTORY)/energyDownlift
+OUT_LIVINGWAGEINT = output/$(DEFAULT_OUTPUT_SUBDIRECTORY)/livingWageIntervention
+OUT_POVERTYUP = output/$(DEFAULT_OUTPUT_SUBDIRECTORY)/hhIncomePovertyLineChildUplift
 SPATIAL_DIRECTORY1 = output/$(INTERVENTION1)# first geojson for comparison in diff plot.
 SPATIAL_DIRECTORY2 = output/$(INTERVENTION2)# second geojson for comparison in aggregate_two_and_diff
 AGG_METHOD = nanmean# what method to aggregate with.
@@ -393,28 +445,34 @@ aggregate_two_and_map_diff:
 	# map LSOAs.
 	$(RSCRIPT) minos/validation/sf12_difference_map.R -f $(SAVE_FILE2) -g $(SAVE_FILE1) -d $(SAVE_PLOT2) -m $(AGG_LOCATION) -v $(AGG_VARIABLE)
 
+aggregate_baseline_map:
+	# aggregate minos outputs into LSOAs.
+	$(PYTHON) minos/validation/format_spatial_output.py -s $(OUT_BASELINE) -y $(AGG_YEAR) -d $(OUT_BASELINE) -m $(AGG_METHOD) -v $(AGG_VARIABLE) -f geojson
+	# Map data now aggregated.
+	$(RSCRIPT) minos/validation/sf12_single_map.R -f $(OUT_BASELINE)/nanmean_SF_12_$(AGG_YEAR).geojson -d $(PLOTDIR)/baseline_map -m $(AGG_LOCATION) -v $(AGG_VARIABLE)
 
 aggregate_baseline_energy_map:
-	$(PYTHON) minos/validation/format_spatial_output.py -s output/baseline -y $(AGG_YEAR) -d output/baseline -m nanmean -v SF_12 -f geojson -u who_bottom_income_quintile
-	$(PYTHON) minos/validation/format_spatial_output.py -s output/energyDownlift -y $(AGG_YEAR) -d output/energyDownlift -m nanmean -v SF_12 -f geojson -u who_boosted
-	$(RSCRIPT) minos/validation/sf12_difference_map.R -f output/energyDownlift/nanmean_SF_12_$(AGG_YEAR).geojson -g output/baseline/nanmean_SF_12_$(AGG_YEAR).geojson -d plots/baseline_vs_energy_difference_map -m $(AGG_LOCATION) -v SF_12
+	$(PYTHON) minos/validation/format_spatial_output.py -s $(OUT_BASELINE) -y $(AGG_YEAR) -d $(OUT_BASELINE) -m nanmean -v SF_12 -f geojson -u who_bottom_income_quintile
+	$(PYTHON) minos/validation/format_spatial_output.py -s $(OUT_ENERGYDOWNLIFT) -y $(AGG_YEAR) -d $(OUT_ENERGYDOWNLIFT) -m nanmean -v SF_12 -f geojson -u who_boosted
+	$(RSCRIPT) minos/validation/sf12_difference_map.R -f $(OUT_ENERGYDOWNLIFT)/nanmean_SF_12_$(AGG_YEAR).geojson -g $(OUT_BASELINE)/nanmean_SF_12_$(AGG_YEAR).geojson -d $(PLOTDIR)/baseline_vs_energy_difference_map -m $(AGG_LOCATION) -v SF_12
 
 aggregate_baseline_living_wage_map:
-	$(PYTHON) minos/validation/format_spatial_output.py -s output/baseline -y $(AGG_YEAR) -d output/baseline -m nanmean -v SF_12 -f	geojson -u who_below_living_wage
-	$(PYTHON) minos/validation/format_spatial_output.py -s output/livingWageIntervention -y $(AGG_YEAR) -d output/livingWageIntervention -m	nanmean	-v SF_12 -f geojson -u who_boosted
-	$(RSCRIPT) minos/validation/sf12_difference_map.R -f output/livingWageIntervention/nanmean_SF_12_$(AGG_YEAR).geojson -g output/baseline/nanmean_SF_12_$(AGG_YEAR).geojson -d plots/baseline_vs_living_wage_difference_map -m $(AGG_LOCATION) -v SF_12
+	$(PYTHON) minos/validation/format_spatial_output.py -s $(OUT_BASELINE) -y $(AGG_YEAR) -d $(OUT_BASELINE) -m nanmean -v SF_12 -f	geojson -u who_below_living_wage
+	$(PYTHON) minos/validation/format_spatial_output.py -s $(OUT_LIVINGWAGEINT) -y $(AGG_YEAR) -d $(OUT_LIVINGWAGEINT) -m	nanmean	-v SF_12 -f geojson -u who_boosted
+	$(RSCRIPT) minos/validation/sf12_difference_map.R -f $(OUT_LIVINGWAGEINT)/nanmean_SF_12_$(AGG_YEAR).geojson -g $(OUT_BASELINE)/nanmean_SF_12_$(AGG_YEAR).geojson -d $(PLOTDIR)/baseline_vs_living_wage_difference_map -m $(AGG_LOCATION) -v SF_12
 
 aggregate_baseline_all_uplift_map:
-	$(PYTHON) minos/validation/format_spatial_output.py -s output/baseline -y $(AGG_YEAR) -d output/baseline -m nanmean -v SF_12 -f	geojson -u who_kids
-	$(PYTHON) minos/validation/format_spatial_output.py -s output/childUplift -y $(AGG_YEAR) -d output/childUplift -m nanmean -v SF_12 -f geojson -u who_boosted
-	$(RSCRIPT) minos/validation/sf12_difference_map.R -f output/childUplift/nanmean_SF_12_$(AGG_YEAR).geojson -g output/baseline/nanmean_SF_12_$(AGG_YEAR).geojson  -d plots/baseline_vs_all_25_uplift_difference_map -m $(AGG_LOCATION) -v SF_12
+	$(PYTHON) minos/validation/format_spatial_output.py -s $(OUT_BASELINE) -y $(AGG_YEAR) -d $(OUT_BASELINE) -m nanmean -v SF_12 -f	geojson -u who_kids
+	$(PYTHON) minos/validation/format_spatial_output.py -s $(OUT_HHINCOMECHILDUP) -y $(AGG_YEAR) -d $(OUT_HHINCOMECHILDUP) -m nanmean -v SF_12 -f geojson -u who_boosted
+	$(RSCRIPT) minos/validation/sf12_difference_map.R -f $(OUT_HHINCOMECHILDUP)/nanmean_SF_12_$(AGG_YEAR).geojson -g $(OUT_BASELINE)/nanmean_SF_12_$(AGG_YEAR).geojson  -d $(PLOTDIR)/baseline_vs_all_25_uplift_difference_map -m $(AGG_LOCATION) -v SF_12
 
 aggregate_baseline_poverty_uplift_map:
-	$(PYTHON) minos/validation/format_spatial_output.py -s output/baseline -y $(AGG_YEAR) -d output/baseline -m nanmean -v SF_12 -f	geojson -u who_below_poverty_line_and_kids
-	$(PYTHON) minos/validation/format_spatial_output.py -s output/povertyUplift -y $(AGG_YEAR) -d output/povertyUplift -m	nanmean	-v SF_12 -f geojson -u who_boosted
-	$(RSCRIPT) minos/validation/sf12_difference_map.R -f output/povertyUplift/nanmean_SF_12_$(AGG_YEAR).geojson -g output/baseline/nanmean_SF_12_$(AGG_YEAR).geojson -d plots/baseline_vs_poverty_25_uplift_difference_map -m $(AGG_LOCATION) -v SF_12
+	$(PYTHON) minos/validation/format_spatial_output.py -s $(OUT_BASELINE) -y $(AGG_YEAR) -d $(OUT_BASELINE) -m nanmean -v SF_12 -f	geojson -u who_below_poverty_line_and_kids
+	$(PYTHON) minos/validation/format_spatial_output.py -s $(OUT_POVERTYUP) -y $(AGG_YEAR) -d $(OUT_POVERTYUP) -m	nanmean	-v SF_12 -f geojson -u who_boosted
+	$(RSCRIPT) minos/validation/sf12_difference_map.R -f $(OUT_POVERTYUP)/nanmean_SF_12_$(AGG_YEAR).geojson -g $(OUT_BASELINE)/nanmean_SF_12_$(AGG_YEAR).geojson -d $(PLOTDIR)/baseline_vs_poverty_25_uplift_difference_map -m $(AGG_LOCATION) -v SF_12
 
-map_all: aggregate_baseline_energy_map aggregate_baseline_living_wage_map aggregate_baseline_all_uplift_map aggregate_baseline_poverty_uplift_map
+map_all: aggregate_baseline_map aggregate_baseline_energy_map aggregate_baseline_living_wage_map aggregate_baseline_all_uplift_map aggregate_baseline_poverty_uplift_map
+map_concept_note: aggregate_baseline_map aggregate_baseline_energy_map aggregate_baseline_living_wage_map aggregate_baseline_all_uplift_map
 
 
 #####################################
