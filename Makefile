@@ -68,6 +68,7 @@ help: ### Show this help
 # conda install -c conda-forge r-dplyr
 # conda install -c conda-forge r-tidyverse
 
+tmp_test: new_setup baseline intervention_livingWage intervention_hhIncomeChildUplift aggregate_minos_output_living_wage aggregate_minos_output_energy
 
 ## Install
 ###
@@ -116,19 +117,19 @@ baseline: ### Baseline run of MINOS, using configuration defined in testConfig.y
 baseline: new_setup
 	$(PYTHON) scripts/run.py -c $(CONFIG)/default.yaml -o 'default_config'
 
-intervention_hhIncome: setup
+intervention_hhIncome: new_setup
 	$(PYTHON) scripts/run.py -c $(CONFIG)/default.yaml -o 'default_config' -i 'hhIncomeIntervention'
 
-intervention_hhIncomeChildUplift: setup
+intervention_hhIncomeChildUplift: new_setup
 	$(PYTHON) scripts/run.py -c $(CONFIG)/default.yaml -o 'default_config' -i 'hhIncomeChildUplift'
 
-intervention_PovertyLineChildUplift: setup
+intervention_PovertyLineChildUplift: new_setup
 	$(PYTHON) scripts/run.py -c $(CONFIG)/default.yaml -o 'default_config' -i 'hhIncomePovertyLineChildUplift'
 
-intervention_livingWage: setup
+intervention_livingWage: new_setup
 	$(PYTHON) scripts/run.py -c $(CONFIG)/default.yaml -o 'default_config' -i 'livingWageIntervention'
 
-intervention_energyDownLift: setup
+intervention_energyDownLift: new_setup
 	$(PYTHON) scripts/run.py -c $(CONFIG)/default.yaml -o 'default_config' -i 'energyDownlift'
 
 
