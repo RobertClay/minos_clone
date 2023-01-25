@@ -68,7 +68,8 @@ help: ### Show this help
 # conda install -c conda-forge r-dplyr
 # conda install -c conda-forge r-tidyverse
 
-tmp_test: new_setup baseline intervention_livingWage intervention_hhIncomeChildUplift aggregate_minos_output_living_wage aggregate_minos_output_all_child_uplift
+tmp_test: new_setup baseline intervention_livingWage intervention_hhIncomeChildUplift
+tmp_testplot: aggregate_minos_output_living_wage aggregate_minos_output_all_child_uplift
 
 ## Install
 ###
