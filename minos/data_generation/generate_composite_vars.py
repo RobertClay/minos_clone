@@ -77,7 +77,7 @@ def generate_composite_housing_quality(data):
     # conditionally assign housing_quality var based on the housing sum values
     # first set conditions and values for 3 level var
     conditions = [
-        (data["housing_core_sum"] > 0) & (data["housing_core_sum"] < 3),  # less than full core
+        (data["housing_core_sum"] >= 0) & (data["housing_core_sum"] < 3),  # less than full core
         (data["housing_core_sum"] == 3) & (data["housing_bonus_sum"] >= 0) & (data["housing_bonus_sum"] < 3),
         # all core some bonus
         (data["housing_core_sum"] == 3) & (data["housing_bonus_sum"] == 3),  # all core all bonus

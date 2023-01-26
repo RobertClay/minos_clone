@@ -57,16 +57,19 @@ class MWB(Base):
                         'ethnicity',
                         'age',
                         'education_state',
-                        'labour_state',
                         'job_sec',
                         'hh_income',
                         'SF_12',
                         'housing_quality',
-                        'phealth']
+                        'phealth',
+                        'neighbourhood_safety',
+                        'loneliness',
+                        'nutrition_quality',
+                        'ncigs']
 
         self.population_view = builder.population.get_view(columns=view_columns)
 
-        # Population initialiser. When new individuals are added to the microsimulation a constructer is called for each
+        # Population initialiser. When new individuals are added to the microsimulation a constructor is called for each
         # module. Declare what constructer is used. usually on_initialize_simulants method is called. Inidividuals are
         # created at the start of a model "setup" or after some deterministic (add cohorts) or random (births) event.
         builder.population.initializes_simulants(self.on_initialize_simulants)
