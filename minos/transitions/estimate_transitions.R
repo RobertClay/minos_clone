@@ -250,8 +250,8 @@ run_yearly_models <- function(transitionDir_path, transitionSourceDir_path, mod_
       } else {
         use.weights <- TRUE
       }
-      
-      
+
+
       ## For the SF_12 model alone, we need to modify the formula on the fly
       # as neighbourhood_safety, loneliness, and ncigs are not present every year
       if(dependent == 'SF_12') {
