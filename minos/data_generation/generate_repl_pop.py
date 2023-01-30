@@ -57,8 +57,10 @@ def expand_and_reweight_repl(US_2018, projections):
         new_repl['hh_int_y'] = new_repl['hh_int_y'].astype(int) + (year - 2017)
         # now update Date variable (just use US_utils function
         new_repl = US_utils.generate_interview_date_var(new_repl)
+        # Duplicate this population(TWICE) so we have double the number of 16-year-olds to work with
+        new_repl = pd.concat([new_repl, new_repl, new_repl], ignore_index=True)
         # adjust pidp to ensure unique values (have checked this and made sure this will never give us a duplicate)
-        new_repl['pidp'] = new_repl['pidp'] + year + 1000000
+        new_repl['pidp'] = new_repl['pidp'] + year + 1000000 + new_repl.index
 
         # now append to original repl
         expanded_repl = pd.concat([expanded_repl, new_repl], axis=0)
@@ -79,6 +81,10 @@ def expand_and_reweight_repl(US_2018, projections):
     expanded_repl.drop(labels=['count', 'sum_weight'],
                          inplace=True,
                          axis=1)
+
+    # Final step is to rescale to range(0,1) because larger weights broke some transition models
+    expanded_repl['weight'] = (expanded_repl['weight'] - min(expanded_repl['weight'])) / (
+                max(expanded_repl['weight']) - min(expanded_repl['weight']))
 
     return expanded_repl
 
@@ -102,23 +108,20 @@ def predict_education(repl):
     """
     print("Predicting max education level for replenishing populations...")
 
-    transition_model = r_utils.load_transitions(f"data/transitions/education_state/nnet/education_state_2018_2019", "")
+    ## First load in the transition model and produce a probability distribution for max education
+    # Then create an empty variable for max_educ, and make a choice from the probability distribution about
+    # which level to assign as highest education attainment
 
+    # generate list of columns for prediction output (no educ==4 in Understanding Society)
+    cols = ['0', '1', '2', '3', '5', '6', '7']
+
+    transition_model = r_utils.load_transitions(f"data/transitions/education_state/nnet/education_state_2018_2019", "")
+    #prob_df = r_utils.predict_nnet(transition_model, repl, cols)
     prob_df = r_utils.predict_highest_educ_nnet(transition_model, repl)
 
-    #repl['new_educ'] = choice(a = prob_df.columns, p = prob_df[repl.index])
-
     repl['max_educ'] = np.nan
-
     for i, distribution in enumerate(prob_df.iterrows()):
-        #repl.loc[i, 'max_educ']
-        # choice(a=prob_df.columns, p=distribution)
-        #print(distribution[1])
         repl.loc[i, 'max_educ'] = choice(a=prob_df.columns, size=1, p=distribution[1])[0]
-        #print(test)
-
-    #new_educ = random.choices(population=prob_df.columns,
-    #                          weights=)
 
     return repl
 
@@ -129,14 +132,11 @@ def generate_replenishing(projections):
     file_name = "data/complete_US/2018_US_cohort.csv"
     data = pd.read_csv(file_name)
 
+    # expand and reweight the population
     repl = expand_and_reweight_repl(data, projections)
 
     # finally, predict the highest level of educ
     final_repl = predict_education(repl)
-
-    # some columns need to replace missings (negative values in US) with NA
-    #final_repl = US_utils.replace_missing_with_na(final_repl, column_list=['job_sec',
-    #                                                                        'job_sector'])
 
     output_dir = 'data/replenishing/'
     US_utils.check_output_dir(output_dir)
