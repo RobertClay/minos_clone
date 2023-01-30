@@ -62,7 +62,11 @@ class MWB(Base):
                         'hh_income',
                         'SF_12',
                         'housing_quality',
-                        'phealth']
+                        'phealth',
+                        'neighbourhood_safety',
+                        'ncigs',
+                        'nutrition_quality',
+                        'loneliness']
 
         self.population_view = builder.population.get_view(columns=view_columns)
 
@@ -110,7 +114,8 @@ class MWB(Base):
         Returns
         -------
         """
-        year = min(self.year, 2018)
+        #year = min(self.year, 2018)
+        year = 2017
         transition_model = r_utils.load_transitions(f"SF_12/ols/SF_12_{year}_{year+1}")
         return r_utils.predict_next_timestep_ols(transition_model, pop, 'SF_12')
 

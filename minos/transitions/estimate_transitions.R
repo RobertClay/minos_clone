@@ -195,7 +195,7 @@ run_yearly_models <- function(transitionDir_path, transitionSourceDir_path, mod_
     independents <- split2[2]
     
     # formula
-    formula.string <- split1[2]
+    formula.string.orig <- split1[2]
     #print(form)
     
     #print(paste0('Dependent: ', dependent))
@@ -214,6 +214,9 @@ run_yearly_models <- function(transitionDir_path, transitionSourceDir_path, mod_
     print(paste0('Starting for ', dependent, '...'))
     
     for(year in year.range) {
+
+      # reset the formula string for each year
+      formula.string <- formula.string.orig
       
       ## dependent year data is always year + 1 unless data requires something different
       # (as in neighbourhood estimation, does a t+3 model due to data)
@@ -261,7 +264,7 @@ run_yearly_models <- function(transitionDir_path, transitionSourceDir_path, mod_
         if(!year > 2016) {
           formula.string <- str_remove(formula.string, " \\+ factor\\(loneliness\\)")
         }
-        if(year != 2018) {
+        if(year != 2017) {
           formula.string <- str_remove(formula.string, " \\+ scale\\(nutrition_quality\\)")
         }
         if(year < 2013) {
