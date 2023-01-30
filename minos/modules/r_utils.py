@@ -307,7 +307,6 @@ def predict_next_timestep_tobacco_zip(model, current):
     counts = stats.predict(model, currentRDF, type="count")
     zeros = stats.predict(model, currentRDF, type="zero")
 
-
     with localconverter(ro.default_converter + pandas2ri.converter):
         counts = ro.conversion.rpy2py(counts)
     with localconverter(ro.default_converter + pandas2ri.converter):
@@ -316,6 +315,6 @@ def predict_next_timestep_tobacco_zip(model, current):
     # draw randomly if a person smokes.
     # if they drink assign them their predicted value from count.
     # otherwise assign 0 (no cigarettes).
-    preds = (np.random.uniform(size=zeros.shape) < zeros) * counts
+    preds = (np.random.uniform(size=zeros.shape) >= zeros) * counts
     # round up to nearest integer and times by 50 to get actual expenditure back.
-    return np.ceil(preds) * 5 #rescale back up to ncigs.
+    return np.ceil(preds)  # rescale back up to ncigs.
