@@ -87,6 +87,13 @@ def generate_stock(projections):
     # Will be used in the future for the 16-25 year olds at the beginning of the simulation
     data['max_educ'] = data['education_state']
 
+    # Set loneliness and ncigs as int
+    data['loneliness'] = data['loneliness'].astype('int64')
+    data['ncigs'] = data['ncigs'].astype('int64')
+    data['neighbourhood_safety'] = data['neighbourhood_safety'].astype('int64')
+    data['nutrition_quality'] = data['nutrition_quality'].astype('int64')
+    data['housing_quality'] = data['housing_quality'].astype('int64')
+
     US_utils.save_multiple_files(data, years, "data/final_US/", "")
 
 

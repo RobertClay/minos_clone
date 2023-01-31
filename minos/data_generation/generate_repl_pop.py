@@ -138,6 +138,13 @@ def generate_replenishing(projections):
     # finally, predict the highest level of educ
     final_repl = predict_education(repl)
 
+    # Set loneliness and ncigs as int
+    final_repl['loneliness'] = final_repl['loneliness'].astype('int64')
+    final_repl['ncigs'] = final_repl['ncigs'].astype('int64')
+    final_repl['neighbourhood_safety'] = final_repl['neighbourhood_safety'].astype('int64')
+    final_repl['nutrition_quality'] = final_repl['nutrition_quality'].astype('int64')
+    final_repl['housing_quality'] = final_repl['housing_quality'].astype('int64')
+
     output_dir = 'data/replenishing/'
     US_utils.check_output_dir(output_dir)
     final_repl.to_csv(output_dir + 'replenishing_pop_2019-2070.csv', index=False)
