@@ -84,10 +84,11 @@ def generate_composite_housing_quality(data):
     ]
     values = [3, 2, 1]
 
-    # first create housing_quality var and set all to missing
-    data['housing_quality'] = -9
+
     # Now apply conditions with numpy.select(), solution found here: https://datagy.io/pandas-conditional-column/
     data["housing_quality"] = np.select(conditions, values)
+    # Set to -9 if missing (currently when housing_quality == 0)
+    data['housing_quality'][data['housing_quality'] == 0] = -9
 
     # drop cols we don't need
     data.drop(labels=['housing_core_sum', 'housing_bonus_sum', 'fridge_freezer', 'washing_machine',

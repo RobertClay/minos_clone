@@ -70,7 +70,7 @@ help: ### Show this help
 
 tmp_test: tmp_testrun dodgy_output_move tmp_testplot
 
-tmp_testrun: new_setup baseline intervention_livingWage intervention_hhIncomeChildUplift
+tmp_testrun: clean_transitions clean_out new_setup baseline intervention_livingWage intervention_hhIncomeChildUplift
 tmp_testplot: aggregate_minos_output_living_wage aggregate_minos_output_all_child_uplift
 
 dodgy_output_move:
@@ -252,10 +252,10 @@ transitions: $(TRANSITION_DATA)/alcohol/zip/alcohol_zip_2018_2019.rds $(TRANSITI
 transitions: $(TRANSITION_DATA)/loneliness/clm/loneliness_clm_2018_2019.rds
 
 new_transitions: | $(TRANSITION_DATA)
-new_transitions: $(TRANSITION_SOURCE)/model_definitions_NEW.txt final_data $(TRANSITION_DATA)/hh_income/ols/hh_income_2018_2019.rds
+new_transitions: final_data $(TRANSITION_DATA)/hh_income/ols/hh_income_2018_2019.rds
 #new_transitions: $(TRANSITION_DATA)/loneliness/clm/loneliness_2018_2019.rds $(TRANSITION_DATA)/neighbourhood_safety/clm/neighbourhood_safety_2014_2017.rds
 
-$(TRANSITION_DATA)/hh_income/ols/hh_income_2018_2019.rds: $(FINALDATA)/2019_US_cohort.csv $(TRANSITION_SOURCE)/estimate_transitions.R
+$(TRANSITION_DATA)/hh_income/ols/hh_income_2018_2019.rds: $(FINALDATA)/2019_US_cohort.csv $(TRANSITION_SOURCE)/estimate_transitions.R $(TRANSITION_SOURCE)/model_definitions_NEW.txt
 	$(RSCRIPT) $(SOURCEDIR)/transitions/estimate_transitions.R
 
 $(TRANSITION_DATA)/loneliness/clm/loneliness_2018_2019.rds: $(FINALDATA)/2019_US_cohort.csv $(SOURCEDIR)/transitions/loneliness/loneliness_clm.R
