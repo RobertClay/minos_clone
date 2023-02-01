@@ -76,7 +76,7 @@ if __name__ == "__main__":
     data['loneliness'] = pd.to_numeric(data['loneliness'], errors='coerce').fillna(1).astype('int')
     ## Now do same for neighbourhood_safety
     data = complete_case_custom_years(data, 'neighbourhood_safety', years=[2011, 2014, 2017, 2018])
-    data['neighbourhood_safety'] = pd.to_numeric(data['neighbourhood_safety'], errors='coerce').fillna(2).astype('int')
+    #data['neighbourhood_safety'] = pd.to_numeric(data['neighbourhood_safety'], errors='coerce').fillna(2).astype('int')
     # ncigs missing for wave 1 only
     data = complete_case_custom_years(data, 'ncigs', years=list(range(2013, 2020, 1)))
     data['ncigs'] = pd.to_numeric(data['ncigs'], errors='coerce').fillna(0).astype('int')
@@ -85,7 +85,7 @@ if __name__ == "__main__":
     data['nutrition_quality'] = pd.to_numeric(data['nutrition_quality'], errors='coerce').fillna((data['nutrition_quality']).mean()).astype('int')
 
     ########## TESTING ##########
-    #data = data[~(data['time'].isin([2017, 2018, 2019, 2020]) & data['neighbourhood_safety'].isna())]
+    data = data[~(data['time'].isin([2017, 2018, 2019, 2020]) & data['neighbourhood_safety'].isna())]
     ########## TESTING ##########
 
 
