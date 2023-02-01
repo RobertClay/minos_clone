@@ -5,5 +5,4 @@ Documentation
 
      data_generation
      modules/index
-     HPC
      validation
